@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uexplugins>
+
+   <plugin
+        className="org.zywx.wbpalmstar.plugin.uexdatabasemgr.EUExDataBaseMgr"
+        uexName="uexDataBaseMgr" >
+        <method name="openDataBase" />
+        <method name="executeSql" />
+        <method name="selectSql" />
+         <method name="transaction" />
+        <method name="beginTransaction" />
+        <method name="endTransaction" />
+        <method name="closeDataBase" />
+    </plugin>
+</uexplugins>
