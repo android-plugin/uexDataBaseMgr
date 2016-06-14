@@ -13,7 +13,6 @@ import org.zywx.wbpalmstar.engine.EBrowserView;
 import org.zywx.wbpalmstar.engine.universalex.EUExBase;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -33,7 +32,7 @@ public class EUExDataBaseMgr extends EUExBase {
 	private HashMap<String, DatabaseHelper> m_dbHMap;
 	private List<String> opCodeList = new ArrayList<String>();
 	private static final int m_DbVer = 1;
-	Context m_eContext;
+    private Context m_eContext;
 
 	public EUExDataBaseMgr(Context context, EBrowserView inParent) {
 		super(context, inParent);
@@ -42,6 +41,10 @@ public class EUExDataBaseMgr extends EUExBase {
 		m_eContext = context;
 	}
 
+    private String getDBFlg(String dbName, String opCode) {
+        return dbName + opCode;
+
+    }
 	public void openDataBase(String[] parm) {
 		if (parm.length != 2) {
 			return;
@@ -62,8 +65,9 @@ public class EUExDataBaseMgr extends EUExBase {
 
 			DatabaseHelper m_databaseHelper = new DatabaseHelper(m_eContext,
 					inDBName, m_DbVer);
-			m_dbMap.put(inDBName, m_databaseHelper.getWritableDatabase());
-			m_dbHMap.put(inDBName, m_databaseHelper);
+            String dbFlg = getDBFlg(inDBName, inOpCode);
+            m_dbMap.put(dbFlg, m_databaseHelper.getWritableDatabase());
+            m_dbHMap.put(dbFlg, m_databaseHelper);
 			opCodeList.add(inOpCode);
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
@@ -85,7 +89,7 @@ public class EUExDataBaseMgr extends EUExBase {
 			inOpCode = "0";
 		}
 		try {
-			SQLiteDatabase object = m_dbMap.get(inDBName);
+            SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 			if (object != null) {
 
 				object.execSQL(inSql);
@@ -111,7 +115,7 @@ public class EUExDataBaseMgr extends EUExBase {
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
-		SQLiteDatabase object = m_dbMap.get(inDBName);
+        SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 		if (object != null) {
 			try {
 				Cursor cursor = object.rawQuery(inSql, null);
@@ -176,7 +180,8 @@ public class EUExDataBaseMgr extends EUExBase {
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
 		}
 	}
-	public  String formatNum(double value)
+
+    private String formatNum(double value)
     {
         String retValue = null;
         DecimalFormat df = new DecimalFormat();
@@ -186,6 +191,7 @@ public class EUExDataBaseMgr extends EUExBase {
         retValue = retValue.replaceAll(",", "");
         return retValue;
     }
+
 	public void beginTransaction(String[] parm) {
 		if (parm.length < 2) {
 			return;
@@ -195,7 +201,7 @@ public class EUExDataBaseMgr extends EUExBase {
 			inOpCode = "0";
 		}
 		try {
-			SQLiteDatabase object = m_dbMap.get(inDBName);
+            SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 			if (object != null) {
 				object.beginTransaction();
 			}
@@ -213,7 +219,7 @@ public class EUExDataBaseMgr extends EUExBase {
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
-		SQLiteDatabase object = m_dbMap.get(inDBName);
+        SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 		if (object != null) {
 			try {
 				object.setTransactionSuccessful();
@@ -244,12 +250,13 @@ public class EUExDataBaseMgr extends EUExBase {
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
-		DatabaseHelper dbh = m_dbHMap.remove(inDBName);
+        DatabaseHelper dbh = m_dbHMap.remove(getDBFlg(inDBName, inOpCode));
 		if (dbh != null) {
 			try {
 				dbh.close();
 				dbh = null;
-				SQLiteDatabase object = m_dbMap.remove(inDBName);
+                SQLiteDatabase object = m_dbMap
+                        .remove(getDBFlg(inDBName, inOpCode));
 				object.close();
 				object = null;
 				opCodeList.remove(inOpCode);
