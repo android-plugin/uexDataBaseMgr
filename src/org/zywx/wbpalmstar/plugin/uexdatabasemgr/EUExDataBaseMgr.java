@@ -33,20 +33,20 @@ public class EUExDataBaseMgr extends EUExBase {
 	private HashMap<String, DatabaseHelper> m_dbHMap;
 	private List<String> opCodeList = new ArrayList<String>();
 	private static final int m_DbVer = 1;
-	Context m_eContext;
+    private Context m_eContext;
 
-    private String selectSqlFuncId;
-    private String transactionFuncId;
-    private String executeSqlFuncId;
-
-    public EUExDataBaseMgr(Context context, EBrowserView inParent) {
+	public EUExDataBaseMgr(Context context, EBrowserView inParent) {
 		super(context, inParent);
 		m_dbMap = new HashMap<String, SQLiteDatabase>();
 		m_dbHMap = new HashMap<String, DatabaseHelper>();
 		m_eContext = context;
 	}
 
-	public int openDataBase(String[] parm) {
+    private String getDBFlg(String dbName, String opCode) {
+        return dbName + opCode;
+
+    }
+	public void openDataBase(String[] parm) {
 		if (parm.length != 2) {
 			return EUExCallback.F_C_FAILED;
 		}
@@ -66,8 +66,9 @@ public class EUExDataBaseMgr extends EUExBase {
 
 			DatabaseHelper m_databaseHelper = new DatabaseHelper(m_eContext,
 					inDBName, m_DbVer);
-			m_dbMap.put(inDBName, m_databaseHelper.getWritableDatabase());
-			m_dbHMap.put(inDBName, m_databaseHelper);
+            String dbFlg = getDBFlg(inDBName, inOpCode);
+            m_dbMap.put(dbFlg, m_databaseHelper.getWritableDatabase());
+            m_dbHMap.put(dbFlg, m_databaseHelper);
 			opCodeList.add(inOpCode);
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
@@ -77,14 +78,14 @@ public class EUExDataBaseMgr extends EUExBase {
 			e.printStackTrace();
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-            return EUExCallback.F_C_SUCCESS;
+            return EUExCallback.F_C_FAILED;
 		}
 
 	}
 
-	public boolean executeSql(String[] parm) {
-		if (parm.length < 3) {
-			return false;
+	public void executeSql(String[] parm) {
+		if (parm.length != 3) {
+			return;
 		}
 		String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
         if (parm.length == 4) {
@@ -94,7 +95,7 @@ public class EUExDataBaseMgr extends EUExBase {
 			inOpCode = "0";
 		}
 		try {
-			SQLiteDatabase object = m_dbMap.get(inDBName);
+            SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 			if (object != null) {
 
 				object.execSQL(inSql);
@@ -134,7 +135,7 @@ public class EUExDataBaseMgr extends EUExBase {
         if (parm.length == 4) {
             selectSqlFuncId = parm[3];
         }
-		SQLiteDatabase object = m_dbMap.get(inDBName);
+        SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 		if (object != null) {
 			try {
 				Cursor cursor = object.rawQuery(inSql, null);
@@ -211,7 +212,8 @@ public class EUExDataBaseMgr extends EUExBase {
             }
 		}
 	}
-	public  String formatNum(double value)
+
+    private String formatNum(double value)
     {
         String retValue = null;
         DecimalFormat df = new DecimalFormat();
@@ -233,7 +235,7 @@ public class EUExDataBaseMgr extends EUExBase {
 			inOpCode = "0";
 		}
 		try {
-			SQLiteDatabase object = m_dbMap.get(inDBName);
+            SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 			if (object != null) {
 				object.beginTransaction();
 			}
@@ -252,7 +254,7 @@ public class EUExDataBaseMgr extends EUExBase {
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
-		SQLiteDatabase object = m_dbMap.get(inDBName);
+        SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
 		if (object != null) {
 			try {
 				object.setTransactionSuccessful();
@@ -292,12 +294,13 @@ public class EUExDataBaseMgr extends EUExBase {
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
-		DatabaseHelper dbh = m_dbHMap.remove(inDBName);
+        DatabaseHelper dbh = m_dbHMap.remove(getDBFlg(inDBName, inOpCode));
 		if (dbh != null) {
 			try {
 				dbh.close();
 				dbh = null;
-				SQLiteDatabase object = m_dbMap.remove(inDBName);
+                SQLiteDatabase object = m_dbMap
+                        .remove(getDBFlg(inDBName, inOpCode));
 				object.close();
 				object = null;
 				opCodeList.remove(inOpCode);
