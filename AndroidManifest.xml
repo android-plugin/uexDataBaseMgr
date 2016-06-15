@@ -18,7 +18,35 @@
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/browser_main_theme"
-            android:windowSoftInputMode="stateHidden|adjustResize" >
+            android:windowSoftInputMode="stateHidden|adjustPan" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="appcanscheme" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.zywx.wbpalmstar.platform.mam.PolicyActivity"
+            android:configChanges="orientation|keyboardHidden|navigation"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name="org.zywx.wbpalmstar.platform.mam.PolicyInfoActivity"
+            android:configChanges="orientation|keyboardHidden|navigation"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name="org.zywx.wbpalmstar.engine.TempActivity"
+            android:launchMode="standard"
+            android:screenOrientation="portrait"
+            />
+        <activity
+            android:name="org.zywx.wbpalmstar.engine.LoadingActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:launchMode="standard"
+            android:screenOrientation="portrait"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -33,5 +61,5 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-  
+
 </manifest>

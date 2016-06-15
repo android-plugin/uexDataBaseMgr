@@ -35,16 +35,20 @@ public class EUExDataBaseMgr extends EUExBase {
 	private static final int m_DbVer = 1;
 	Context m_eContext;
 
-	public EUExDataBaseMgr(Context context, EBrowserView inParent) {
+    private String selectSqlFuncId;
+    private String transactionFuncId;
+    private String executeSqlFuncId;
+
+    public EUExDataBaseMgr(Context context, EBrowserView inParent) {
 		super(context, inParent);
 		m_dbMap = new HashMap<String, SQLiteDatabase>();
 		m_dbHMap = new HashMap<String, DatabaseHelper>();
 		m_eContext = context;
 	}
 
-	public void openDataBase(String[] parm) {
+	public int openDataBase(String[] parm) {
 		if (parm.length != 2) {
-			return;
+			return EUExCallback.F_C_FAILED;
 		}
 		String inDBName = parm[0];
 		String inOpCode = parm[1];
@@ -57,7 +61,7 @@ public class EUExDataBaseMgr extends EUExBase {
 		}
 		try {
 			if (opCodeList.contains(inOpCode)) {
-				return;
+				return -1;
 			}
 
 			DatabaseHelper m_databaseHelper = new DatabaseHelper(m_eContext,
@@ -67,20 +71,25 @@ public class EUExDataBaseMgr extends EUExBase {
 			opCodeList.add(inOpCode);
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
+            return EUExCallback.F_C_SUCCESS;
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+            return EUExCallback.F_C_SUCCESS;
 		}
 
 	}
 
-	public void executeSql(String[] parm) {
-		if (parm.length != 3) {
-			return;
+	public boolean executeSql(String[] parm) {
+		if (parm.length < 3) {
+			return false;
 		}
 		String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
+        if (parm.length == 4) {
+            executeSqlFuncId = parm[3];
+        }
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
@@ -91,26 +100,40 @@ public class EUExDataBaseMgr extends EUExBase {
 				object.execSQL(inSql);
 				jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
 						EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
-			} else {
+                if (null != executeSqlFuncId) {
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_SUCCESS);
+                }
+
+            } else {
 				jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
 						EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                if (null != executeSqlFuncId) {
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_FAILED);
+                }
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-		}
+            if (null != executeSqlFuncId) {
+                callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_FAILED);
+            }
+        }
+        return true;
 
 	}
 
 	public void selectSql(String[] parm) {
-		if (parm.length != 3) {
+		if (parm.length < 3) {
 			return;
 		}
 		String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
 		}
+        if (parm.length == 4) {
+            selectSqlFuncId = parm[3];
+        }
 		SQLiteDatabase object = m_dbMap.get(inDBName);
 		if (object != null) {
 			try {
@@ -149,7 +172,7 @@ public class EUExDataBaseMgr extends EUExBase {
 									break;
 								}
 							}
-							
+
 							if (!TextUtils.isEmpty(value)) {
 								jo.put(key, value);
 							} else {
@@ -161,19 +184,31 @@ public class EUExDataBaseMgr extends EUExBase {
 					jsCallback(F_SELECTSQL_CALLBACK,
 							Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
 							BUtility.transcoding(jsonItems.toString()));
+                    if (null != selectSqlFuncId) {
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, jsonItems);
+                    }
 				} else {
 					jsCallback(F_SELECTSQL_CALLBACK,
 							Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
 							EUExCallback.F_C_FAILED);
+                    if (null != selectSqlFuncId) {
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, EUExCallback.F_C_FAILED);
+                    }
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
 						EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                if (null != selectSqlFuncId) {
+                    callbackToJs(Integer.parseInt(selectSqlFuncId), false, EUExCallback.F_C_FAILED);
+                }
 			}
 		} else {
 			jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+            if (null != selectSqlFuncId) {
+                callbackToJs(Integer.parseInt(selectSqlFuncId), false, EUExCallback.F_C_FAILED);
+            }
 		}
 	}
 	public  String formatNum(double value)
@@ -186,10 +221,13 @@ public class EUExDataBaseMgr extends EUExBase {
         retValue = retValue.replaceAll(",", "");
         return retValue;
     }
-	public void beginTransaction(String[] parm) {
+	public boolean beginTransaction(String[] parm) {
 		if (parm.length < 2) {
-			return;
+			return false;
 		}
+        if (parm.length == 4) {
+            transactionFuncId = parm[3];
+        }
 		String inDBName = parm[0], inOpCode = parm[1];
 		if (!BUtility.isNumeric(inOpCode)) {
 			inOpCode = "0";
@@ -202,6 +240,7 @@ public class EUExDataBaseMgr extends EUExBase {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+        return true;
 
 	}
 
@@ -220,22 +259,31 @@ public class EUExDataBaseMgr extends EUExBase {
 				jsCallback(F_CBTRANSACTION_CALLBACK,
 						Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
 						EUExCallback.F_C_SUCCESS);
+                if (null != transactionFuncId) {
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_SUCCESS);
+                }
 			} catch (IllegalStateException e) {
 				jsCallback(F_CBTRANSACTION_CALLBACK,
 						Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
 						EUExCallback.F_C_FAILED);
+                if (null != transactionFuncId) {
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_FAILED);
+                }
 			} finally {
 				object.endTransaction();
 			}
 		} else {
 			jsCallback(F_CBTRANSACTION_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+            if (null != transactionFuncId) {
+                callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_FAILED);
+            }
 		}
 	}
 
-	public void closeDataBase(String[] parm) {
+	public int closeDataBase(String[] parm) {
 		if (parm.length != 2) {
-			return;
+			return EUExCallback.F_C_FAILED;
 		}
 		String inDBName = parm[0], inOpCode = parm[1];
 		if (inOpCode == null || inOpCode.length() == 0) {
@@ -256,16 +304,19 @@ public class EUExDataBaseMgr extends EUExBase {
 				jsCallback(F_CLOSEDATABASE_CALLBACK,
 						Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
 						EUExCallback.F_C_SUCCESS);
+                return EUExCallback.F_C_SUCCESS;
 			} catch (Exception e) {
 				jsCallback(F_CLOSEDATABASE_CALLBACK,
 						Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
 						EUExCallback.F_C_FAILED);
+                return EUExCallback.F_C_FAILED;
 			}
 
 		} else {
 			jsCallback(F_CLOSEDATABASE_CALLBACK, Integer.parseInt(inOpCode),
 					EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-		}
+            return EUExCallback.F_C_FAILED;
+        }
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
