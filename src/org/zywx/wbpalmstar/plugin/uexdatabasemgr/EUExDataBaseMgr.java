@@ -33,9 +33,13 @@ public class EUExDataBaseMgr extends EUExBase {
 	private HashMap<String, DatabaseHelper> m_dbHMap;
 	private List<String> opCodeList = new ArrayList<String>();
 	private static final int m_DbVer = 1;
-    private Context m_eContext;
+	private Context m_eContext;
 
-	public EUExDataBaseMgr(Context context, EBrowserView inParent) {
+    private String selectSqlFuncId;
+    private String transactionFuncId;
+    private String executeSqlFuncId;
+
+    public EUExDataBaseMgr(Context context, EBrowserView inParent) {
 		super(context, inParent);
 		m_dbMap = new HashMap<String, SQLiteDatabase>();
 		m_dbHMap = new HashMap<String, DatabaseHelper>();
@@ -46,7 +50,7 @@ public class EUExDataBaseMgr extends EUExBase {
         return dbName + opCode;
 
     }
-	public void openDataBase(String[] parm) {
+	public int openDataBase(String[] parm) {
 		if (parm.length != 2) {
 			return EUExCallback.F_C_FAILED;
 		}
@@ -83,9 +87,9 @@ public class EUExDataBaseMgr extends EUExBase {
 
 	}
 
-	public void executeSql(String[] parm) {
-		if (parm.length != 3) {
-			return;
+	public boolean executeSql(String[] parm) {
+		if (parm.length < 3) {
+			return false;
 		}
 		String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
         if (parm.length == 4) {
