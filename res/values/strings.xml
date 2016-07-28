@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
 
-<!-- common use通用字符串 -->
+    <!-- common use通用字符串 -->
     <string name="app_name">uexDataBaseMgr</string>
     <string name="back">返回</string>
     <string name="confirm">确定</string>
@@ -46,5 +46,5 @@
     <string name="platform_myspace_release_to_refresh">释放刷新推荐列表</string>
     <string name="platform_myspace_loading">加载中...</string>
     <string name="platform_myspace_tap_to_refresh">点击刷新推荐列表</string>
-	
+
 </resources>

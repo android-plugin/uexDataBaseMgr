@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
 
     <TextView
         android:id="@+id/actionsheet_list_menu_item_btn"
@@ -16,6 +16,6 @@
         android:gravity="center"
         android:textColor="@color/platform_window_actionsheet_list_item_text_color_selector"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"/>
 
 </RelativeLayout>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="70dip"
-    android:layout_height="80dip"
-    android:background="@drawable/platform_myspace_grid_item_bg_selector" >
+                android:layout_width="70dip"
+                android:layout_height="80dip"
+                android:background="@drawable/platform_myspace_grid_item_bg_selector">
 
     <ImageView
         android:id="@+id/platform_myspace_app_icon"
@@ -10,7 +10,7 @@
         android:layout_height="48dip"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dip" />
+        android:layout_marginTop="10dip"/>
 
     <ProgressBar
         android:id="@+id/platform_myspace_app_download_indicator"
@@ -23,7 +23,7 @@
         android:max="100"
         android:progress="0"
         android:progressDrawable="@drawable/platform_myspace_grid_item_progressbar_style"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/platform_myspace_app_name"
@@ -35,6 +35,6 @@
         android:paddingLeft="2dip"
         android:paddingRight="2dip"
         android:textColor="@android:color/black"
-        android:textSize="12sp" />
+        android:textSize="12sp"/>
 
 </RelativeLayout>

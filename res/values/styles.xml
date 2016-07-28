@@ -66,5 +66,5 @@
         <item name="android:windowEnterAnimation">@anim/platform_myspace_fade_in_anim</item>
         <item name="android:windowExitAnimation">@anim/platform_myspace_fade_out_anim</item>
     </style>
-	
+
 </resources>

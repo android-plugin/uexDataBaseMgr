@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content" >
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
 
     <TextView
         android:id="@+id/tv_dialog_input_desc"
@@ -10,7 +10,7 @@
         android:layout_alignParentTop="true"
         android:layout_margin="10dip"
         android:gravity="left|center_vertical"
-        android:textSize="20sp" />
+        android:textSize="20sp"/>
 
     <EditText
         android:id="@+id/et_dialog_input_text"
@@ -18,6 +18,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tv_dialog_input_desc"
         android:layout_marginLeft="10dip"
-        android:layout_marginRight="10dip" />
+        android:layout_marginRight="10dip"/>
 
 </RelativeLayout>
