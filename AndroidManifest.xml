@@ -3,44 +3,10 @@
           android:versionCode="1"
           android:versionName="1.0">
 
-    <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="15"/>
-
     <application
         android:name="org.zywx.wbpalmstar.widgetone.WidgetOneApplication"
-        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name">
-        <activity
-            android:name="org.zywx.wbpalmstar.engine.EBrowserActivity"
-            android:alwaysRetainTaskState="true"
-            android:configChanges="keyboardHidden|orientation"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait"
-            android:theme="@style/browser_main_theme"
-            android:windowSoftInputMode="stateHidden|adjustPan">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
 
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data android:scheme="appcanscheme"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.zywx.wbpalmstar.platform.mam.PolicyActivity"
-            android:configChanges="orientation|keyboardHidden|navigation"
-            android:windowSoftInputMode="adjustPan"/>
-        <activity
-            android:name="org.zywx.wbpalmstar.platform.mam.PolicyInfoActivity"
-            android:configChanges="orientation|keyboardHidden|navigation"
-            android:windowSoftInputMode="adjustPan"/>
-        <activity
-            android:name="org.zywx.wbpalmstar.engine.TempActivity"
-            android:launchMode="standard"
-            android:screenOrientation="portrait"
-        />
         <activity
             android:name="org.zywx.wbpalmstar.engine.LoadingActivity"
             android:configChanges="keyboardHidden|orientation"

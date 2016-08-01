@@ -1,25 +1,30 @@
 package org.zywx.wbpalmstar.plugin.uexdatabasemgr;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.zywx.wbpalmstar.base.BUtility;
-import org.zywx.wbpalmstar.engine.EBrowserView;
-import org.zywx.wbpalmstar.engine.universalex.EUExBase;
-import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
-
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build.VERSION;
 import android.text.TextUtils;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.zywx.wbpalmstar.base.BDebug;
+import org.zywx.wbpalmstar.base.BUtility;
+import org.zywx.wbpalmstar.engine.DataHelper;
+import org.zywx.wbpalmstar.engine.EBrowserView;
+import org.zywx.wbpalmstar.engine.universalex.EUExBase;
+import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
+import org.zywx.wbpalmstar.plugin.uexdatabasemgr.vo.DataBaseVO;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.zywx.wbpalmstar.engine.universalex.EUExCallback.F_C_SUCCESS;
 
 public class EUExDataBaseMgr extends EUExBase {
 
@@ -34,10 +39,7 @@ public class EUExDataBaseMgr extends EUExBase {
     private List<String> opCodeList = new ArrayList<String>();
     private static final int m_DbVer = 1;
     private Context m_eContext;
-
-    private String selectSqlFuncId;
-    private String transactionFuncId;
-    private String executeSqlFuncId;
+    private static int sCurrentId;
 
     public EUExDataBaseMgr(Context context, EBrowserView inParent) {
         super(context, inParent);
@@ -76,8 +78,8 @@ public class EUExDataBaseMgr extends EUExBase {
             m_dbHMap.put(dbFlg, m_databaseHelper);
             opCodeList.add(inOpCode);
             jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
-                    EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
-            return EUExCallback.F_C_SUCCESS;
+                    EUExCallback.F_C_INT, F_C_SUCCESS);
+            return F_C_SUCCESS;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -88,11 +90,27 @@ public class EUExDataBaseMgr extends EUExBase {
 
     }
 
+    public DataBaseVO open(String[] params){
+        DataBaseVO dataBaseVO =new DataBaseVO();
+        dataBaseVO.id=generateId();
+        dataBaseVO.name=params[0];
+        int result=openDataBase(new String[]{
+                dataBaseVO.name,
+                dataBaseVO.id,
+        });
+        return result== F_C_SUCCESS? dataBaseVO :null;
+    }
+
+    private String generateId(){
+        sCurrentId++;
+        return String.valueOf(sCurrentId);
+    }
+
     public boolean executeSql(String[] parm) {
         if (parm.length < 3) {
             return false;
         }
-        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
+        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2],executeSqlFuncId=null;
         if (parm.length == 4) {
             executeSqlFuncId = parm[3];
         }
@@ -105,16 +123,16 @@ public class EUExDataBaseMgr extends EUExBase {
 
                 object.execSQL(inSql);
                 jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                        EUExCallback.F_C_INT, EUExCallback.F_C_SUCCESS);
+                        EUExCallback.F_C_INT, F_C_SUCCESS);
                 if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_SUCCESS);
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, true);
                 }
 
             } else {
                 jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_FAILED);
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, false);
                 }
             }
         } catch (Exception e) {
@@ -122,18 +140,31 @@ public class EUExDataBaseMgr extends EUExBase {
             jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != executeSqlFuncId) {
-                callbackToJs(Integer.parseInt(executeSqlFuncId), false, EUExCallback.F_C_FAILED);
+                callbackToJs(Integer.parseInt(executeSqlFuncId), false, false);
             }
         }
         return true;
 
     }
 
+    public void sql(String[] params){
+        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
+        String[] inParams=new String[params.length+1];
+        inParams[0]=dbVO.name;
+        inParams[1]=dbVO.id;
+        inParams[2]=params[1];
+        if (params.length>2){
+            inParams[3]=params[2];
+        }
+        executeSql(inParams);
+    }
+
+
     public void selectSql(String[] parm) {
         if (parm.length < 3) {
             return;
         }
-        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2];
+        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2],selectSqlFuncId=null;
         if (!BUtility.isNumeric(inOpCode)) {
             inOpCode = "0";
         }
@@ -191,14 +222,14 @@ public class EUExDataBaseMgr extends EUExBase {
                             Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
                             BUtility.transcoding(jsonItems.toString()));
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, jsonItems);
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,true, jsonItems);
                     }
                 } else {
                     jsCallback(F_SELECTSQL_CALLBACK,
                             Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                             EUExCallback.F_C_FAILED);
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, new JSONArray());
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,false, new JSONArray());
                     }
                 }
             } catch (Exception e) {
@@ -206,16 +237,26 @@ public class EUExDataBaseMgr extends EUExBase {
                 jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != selectSqlFuncId) {
-                    callbackToJs(Integer.parseInt(selectSqlFuncId), false);
+                    callbackToJs(Integer.parseInt(selectSqlFuncId), false,false);
                 }
             }
         } else {
             jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != selectSqlFuncId) {
-                callbackToJs(Integer.parseInt(selectSqlFuncId), false, new JSONArray());
+                callbackToJs(Integer.parseInt(selectSqlFuncId), false,false, new JSONArray());
             }
         }
+    }
+
+    public void select(String[] params){
+        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
+        selectSql(new String[]{
+                dbVO.name,
+                dbVO.id,
+                params[1],
+                params.length>2?params[2]:null
+        });
     }
 
     private String formatNum(double value) {
@@ -228,14 +269,34 @@ public class EUExDataBaseMgr extends EUExBase {
         return retValue;
     }
 
-    public boolean beginTransaction(String[] parm) {
-        if (parm.length < 2) {
+    private static boolean isJson(String value){
+        if (TextUtils.isEmpty(value)){
             return false;
         }
-        if (parm.length == 4) {
-            transactionFuncId = parm[3];
+        try {
+            JSONObject jsonObject=new JSONObject(value);
+            return true;
+        } catch (JSONException e) {
+            if (BDebug.DEBUG){
+                e.printStackTrace();
+            }
+            return false;
         }
-        String inDBName = parm[0], inOpCode = parm[1];
+    }
+
+    public boolean beginTransaction(String[] parm) {
+        String inDBName = null, inOpCode = null;
+        boolean isJson=isJson(parm[0]);
+        if (isJson){
+            DataBaseVO dbVO=DataHelper.gson.fromJson(parm[0],DataBaseVO.class);
+            inDBName=dbVO.name;
+            inOpCode=dbVO.id;
+        }else{
+            inDBName = parm[0];
+            inOpCode = parm[1];
+        }
+
+
         if (!BUtility.isNumeric(inOpCode)) {
             inOpCode = "0";
         }
@@ -252,10 +313,23 @@ public class EUExDataBaseMgr extends EUExBase {
     }
 
     public void endTransaction(String[] parm) {
-        if (parm.length < 2) {
-            return;
+        String inDBName = null, inOpCode = null,transactionFuncId = null;
+        boolean isJson=isJson(parm[0]);
+        if (isJson){
+            DataBaseVO dbVO=DataHelper.gson.fromJson(parm[0],DataBaseVO.class);
+            inDBName=dbVO.name;
+            inOpCode=dbVO.id;
+            if (parm.length>2){
+                transactionFuncId=parm[2];
+            }
+        }else{
+            inDBName = parm[0];
+            inOpCode = parm[1];
+            if (parm.length >3) {
+                transactionFuncId = parm[3];
+            }
         }
-        String inDBName = parm[0], inOpCode = parm[1];
+
         if (!BUtility.isNumeric(inOpCode)) {
             inOpCode = "0";
         }
@@ -265,16 +339,16 @@ public class EUExDataBaseMgr extends EUExBase {
                 object.setTransactionSuccessful();
                 jsCallback(F_CBTRANSACTION_CALLBACK,
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
-                        EUExCallback.F_C_SUCCESS);
+                        F_C_SUCCESS);
                 if (null != transactionFuncId) {
-                    callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_SUCCESS);
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, true);
                 }
             } catch (IllegalStateException e) {
                 jsCallback(F_CBTRANSACTION_CALLBACK,
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                         EUExCallback.F_C_FAILED);
                 if (null != transactionFuncId) {
-                    callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_FAILED);
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, false);
                 }
             } finally {
                 object.endTransaction();
@@ -283,9 +357,33 @@ public class EUExDataBaseMgr extends EUExBase {
             jsCallback(F_CBTRANSACTION_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != transactionFuncId) {
-                callbackToJs(Integer.parseInt(transactionFuncId), false, EUExCallback.F_C_FAILED);
+                callbackToJs(Integer.parseInt(transactionFuncId), false, false);
             }
         }
+    }
+
+    public void transactionEx(String[] params){
+        DataBaseVO dataBaseVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
+        String transFuncId=params[1];
+        String callbackFuncId=null;
+        if (params.length>2){
+            callbackFuncId=params[2];
+        }
+        beginTransaction(new String[]{
+                dataBaseVO.name,
+                dataBaseVO.id,
+                transFuncId,
+                callbackFuncId
+        });
+        callbackToJs(Integer.parseInt(transFuncId),false);//
+        StringBuilder endTransJS=new StringBuilder("javascript:");
+        endTransJS.append("uexDataBaseMgr.endTransaction('")
+                .append(dataBaseVO.name).append("','")
+                .append(dataBaseVO.id).append("','")
+                .append(transFuncId).append("','")
+                .append(callbackFuncId)
+                .append("');");
+        mBrwView.addUriTask(endTransJS.toString());
     }
 
     public int closeDataBase(String[] parm) {
@@ -311,8 +409,8 @@ public class EUExDataBaseMgr extends EUExBase {
                 opCodeList.remove(inOpCode);
                 jsCallback(F_CLOSEDATABASE_CALLBACK,
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
-                        EUExCallback.F_C_SUCCESS);
-                return EUExCallback.F_C_SUCCESS;
+                        F_C_SUCCESS);
+                return F_C_SUCCESS;
             } catch (Exception e) {
                 jsCallback(F_CLOSEDATABASE_CALLBACK,
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
@@ -325,6 +423,15 @@ public class EUExDataBaseMgr extends EUExBase {
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             return EUExCallback.F_C_FAILED;
         }
+    }
+
+    public boolean close(String[] params){
+        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
+        int result=closeDataBase(new String[]{
+                dbVO.name,
+                dbVO.id
+        });
+        return result==0;
     }
 
     private static class DatabaseHelper extends SQLiteOpenHelper {

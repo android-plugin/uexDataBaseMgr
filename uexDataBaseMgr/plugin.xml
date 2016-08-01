@@ -2,13 +2,18 @@
 <uexplugins>
     <plugin
         className="org.zywx.wbpalmstar.plugin.uexdatabasemgr.EUExDataBaseMgr"
-        uexName="uexDataBaseMgr" version="3.0" build="0">
+        uexName="uexDataBaseMgr">
         <method name="openDataBase"/>
+        <method name="open"/>
         <method name="executeSql"/>
+        <method name="sql"/>
         <method name="selectSql"/>
+        <method name="select"/>
         <method name="transaction"/>
         <method name="beginTransaction"/>
         <method name="endTransaction"/>
+        <method name="transactionEx"/>
         <method name="closeDataBase"/>
+        <method name="close"/>
     </plugin>
 </uexplugins>

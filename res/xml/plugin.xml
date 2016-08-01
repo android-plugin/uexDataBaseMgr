@@ -5,11 +5,16 @@
         className="org.zywx.wbpalmstar.plugin.uexdatabasemgr.EUExDataBaseMgr"
         uexName="uexDataBaseMgr">
         <method name="openDataBase"/>
+        <method name="open"/>
         <method name="executeSql"/>
+        <method name="sql"/>
         <method name="selectSql"/>
+        <method name="select"/>
         <method name="transaction"/>
         <method name="beginTransaction"/>
         <method name="endTransaction"/>
+        <method name="transactionEx"/>
         <method name="closeDataBase"/>
+        <method name="close"/>
     </plugin>
 </uexplugins>
