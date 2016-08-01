@@ -13,22 +13,22 @@
 
    function createTable() {
        //var sql = "CREATE TABLE testTable (_id  INTEGER PRIMARY KEY,name TEXT)";
-       uexDataBaseMgr.sql(db,document.getElementById('createTable').value, function(isSuccess) {
-           alert("createTable result:"+isSuccess);
+       uexDataBaseMgr.sql(db,document.getElementById('createTable').value, function(error) {
+           alert("createTable result:"+error);
        });
    }
 
    function insertData() {
        //	var sql = "INSERT INTO testTable (name) VALUES ('this is test')";
-       uexDataBaseMgr.sql(db, document.getElementById('insertData').value, function(isSuccess) {
-           alert("insertData result: "+isSuccess);
+       uexDataBaseMgr.sql(db, document.getElementById('insertData').value, function(error) {
+           alert("insertData result: "+error);
        });
    }
 
    function selectData() {
        //	var sql = "SELECT * FROM testTable";
-       uexDataBaseMgr.select(db, document.getElementById('selectData').value, function(isSuccess,data) {
-           if (!isSuccess) {
+       uexDataBaseMgr.select(db, document.getElementById('selectData').value, function(error,data) {
+           if (error) {
                alert("查询失败");
            } else {
                alert("select result:"+JSON.stringify(data));
@@ -38,14 +38,14 @@
 
    function updateData() {
        //	var sql = UPDATE testTable SET name='这是更改' WHERE _id = 1;
-       uexDataBaseMgr.sql(db, document.getElementById('updateData').value, function(isSuccess) {
-           alert("updateData result:"+isSuccess);
+       uexDataBaseMgr.sql(db, document.getElementById('updateData').value, function(error) {
+           alert("updateData result:"+error);
        });
    }
 
    function transaction() {
-       uexDataBaseMgr.transactionEx(db, inFunc, function(isSuccess) {
-           alert("transaction result:"+isSuccess);
+       uexDataBaseMgr.transactionEx(db, inFunc, function(error) {
+           alert("transaction result:"+error);
        });
    }
 
