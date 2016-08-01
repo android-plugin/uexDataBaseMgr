@@ -125,14 +125,14 @@ public class EUExDataBaseMgr extends EUExBase {
                 jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, F_C_SUCCESS);
                 if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, true);
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, false);
                 }
 
             } else {
                 jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, false);
+                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, true);
                 }
             }
         } catch (Exception e) {
@@ -140,7 +140,7 @@ public class EUExDataBaseMgr extends EUExBase {
             jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != executeSqlFuncId) {
-                callbackToJs(Integer.parseInt(executeSqlFuncId), false, false);
+                callbackToJs(Integer.parseInt(executeSqlFuncId), false, true);
             }
         }
         return true;
@@ -222,14 +222,14 @@ public class EUExDataBaseMgr extends EUExBase {
                             Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
                             BUtility.transcoding(jsonItems.toString()));
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,true, jsonItems);
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,false, jsonItems);
                     }
                 } else {
                     jsCallback(F_SELECTSQL_CALLBACK,
                             Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                             EUExCallback.F_C_FAILED);
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,false, new JSONArray());
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,true, new JSONArray());
                     }
                 }
             } catch (Exception e) {
@@ -237,14 +237,14 @@ public class EUExDataBaseMgr extends EUExBase {
                 jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != selectSqlFuncId) {
-                    callbackToJs(Integer.parseInt(selectSqlFuncId), false,false);
+                    callbackToJs(Integer.parseInt(selectSqlFuncId), false,true);
                 }
             }
         } else {
             jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != selectSqlFuncId) {
-                callbackToJs(Integer.parseInt(selectSqlFuncId), false,false, new JSONArray());
+                callbackToJs(Integer.parseInt(selectSqlFuncId), false,true, new JSONArray());
             }
         }
     }
@@ -341,14 +341,14 @@ public class EUExDataBaseMgr extends EUExBase {
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                         F_C_SUCCESS);
                 if (null != transactionFuncId) {
-                    callbackToJs(Integer.parseInt(transactionFuncId), false, true);
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, false);
                 }
             } catch (IllegalStateException e) {
                 jsCallback(F_CBTRANSACTION_CALLBACK,
                         Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                         EUExCallback.F_C_FAILED);
                 if (null != transactionFuncId) {
-                    callbackToJs(Integer.parseInt(transactionFuncId), false, false);
+                    callbackToJs(Integer.parseInt(transactionFuncId), false, true);
                 }
             } finally {
                 object.endTransaction();
@@ -357,7 +357,7 @@ public class EUExDataBaseMgr extends EUExBase {
             jsCallback(F_CBTRANSACTION_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != transactionFuncId) {
-                callbackToJs(Integer.parseInt(transactionFuncId), false, false);
+                callbackToJs(Integer.parseInt(transactionFuncId), false, true);
             }
         }
     }
