@@ -3,8 +3,7 @@ package org.zywx.wbpalmstar.plugin.uexdatabasemgr;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build.VERSION;
+import android.database.sqlite.SQLiteOpenHelper;import android.os.Build;
 import android.text.TextUtils;
 
 import org.json.JSONArray;
@@ -110,46 +109,52 @@ public class EUExDataBaseMgr extends EUExBase {
         if (parm.length < 3) {
             return false;
         }
-        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2],executeSqlFuncId=null;
+        final String inSql = parm[2];
+        final String inDBName = parm[0];
+        final String inOpCode = parm[1];
+        String executeSqlFuncId=null;
         if (parm.length == 4) {
             executeSqlFuncId = parm[3];
         }
-        if (!BUtility.isNumeric(inOpCode)) {
-            inOpCode = "0";
-        }
-        try {
-            SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
-            if (object != null) {
+        final String finalExecuteSqlFuncId = executeSqlFuncId;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
+                    if (object != null) {
 
-                object.execSQL(inSql);
-                jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                        EUExCallback.F_C_INT, F_C_SUCCESS);
-                if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, 0);
-                }
+                        object.execSQL(inSql);
+                        jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
+                                EUExCallback.F_C_INT, F_C_SUCCESS);
+                        if (null != finalExecuteSqlFuncId) {
+                            callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 0);
+                        }
 
-            } else {
-                jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                        EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-                if (null != executeSqlFuncId) {
-                    callbackToJs(Integer.parseInt(executeSqlFuncId), false, 1);
+                    } else {
+                        jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
+                                EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                        if (null != finalExecuteSqlFuncId) {
+                            callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 1);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
+                            EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                    if (null != finalExecuteSqlFuncId) {
+                        callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 1);
+                    }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                    EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-            if (null != executeSqlFuncId) {
-                callbackToJs(Integer.parseInt(executeSqlFuncId), false, 1);
-            }
-        }
+        }).start();
         return true;
 
     }
 
     public void sql(String[] params){
         DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
-        String[] inParams=new String[params.length+1];
+        final String[] inParams=new String[params.length+1];
         inParams[0]=dbVO.name;
         inParams[1]=dbVO.id;
         inParams[2]=params[1];
@@ -157,10 +162,10 @@ public class EUExDataBaseMgr extends EUExBase {
             inParams[3]=params[2];
         }
         executeSql(inParams);
+
     }
 
-
-    public void selectSql(String[] parm) {
+    public void selectSqlOnThread(String[] parm){
         if (parm.length < 3) {
             return;
         }
@@ -184,7 +189,7 @@ public class EUExDataBaseMgr extends EUExBase {
                         for (int i = 0; i < count; i++) {
                             String key = cursor.getColumnName(i);
                             String value = null;
-                            int sysVersion = Integer.parseInt(VERSION.SDK);
+                            int sysVersion = Integer.parseInt(Build.VERSION.SDK);
                             if (sysVersion < 11) {
                                 value = cursor.getString(i);
                             } else {
@@ -247,6 +252,15 @@ public class EUExDataBaseMgr extends EUExBase {
                 callbackToJs(Integer.parseInt(selectSqlFuncId), false,1, new JSONArray());
             }
         }
+    }
+
+    public void selectSql(final String[] parm) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                selectSqlOnThread(parm);
+            }
+        }).start();
     }
 
     public void select(String[] params){
