@@ -3,8 +3,11 @@ package org.zywx.wbpalmstar.plugin.uexdatabasemgr;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;import android.os.Build;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 import android.text.TextUtils;
+
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -89,18 +92,18 @@ public class EUExDataBaseMgr extends EUExBase {
 
     }
 
-    public DataBaseVO open(String[] params){
-        DataBaseVO dataBaseVO =new DataBaseVO();
-        dataBaseVO.id=generateId();
-        dataBaseVO.name=params[0];
-        int result=openDataBase(new String[]{
+    public DataBaseVO open(String[] params) {
+        DataBaseVO dataBaseVO = new DataBaseVO();
+        dataBaseVO.id = generateId();
+        dataBaseVO.name = params[0];
+        int result = openDataBase(new String[]{
                 dataBaseVO.name,
                 dataBaseVO.id,
         });
-        return result== F_C_SUCCESS? dataBaseVO :null;
+        return result == F_C_SUCCESS ? dataBaseVO : null;
     }
 
-    private String generateId(){
+    private String generateId() {
         sCurrentId++;
         return String.valueOf(sCurrentId);
     }
@@ -112,7 +115,7 @@ public class EUExDataBaseMgr extends EUExBase {
         final String inSql = parm[2];
         final String inDBName = parm[0];
         final String inOpCode = parm[1];
-        String executeSqlFuncId=null;
+        String executeSqlFuncId = null;
         if (parm.length == 4) {
             executeSqlFuncId = parm[3];
         }
@@ -152,24 +155,24 @@ public class EUExDataBaseMgr extends EUExBase {
 
     }
 
-    public void sql(String[] params){
-        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
-        final String[] inParams=new String[params.length+1];
-        inParams[0]=dbVO.name;
-        inParams[1]=dbVO.id;
-        inParams[2]=params[1];
-        if (params.length>2){
-            inParams[3]=params[2];
+    public void sql(String[] params) {
+        DataBaseVO dbVO = DataHelper.gson.fromJson(params[0], DataBaseVO.class);
+        final String[] inParams = new String[params.length + 1];
+        inParams[0] = dbVO.name;
+        inParams[1] = dbVO.id;
+        inParams[2] = params[1];
+        if (params.length > 2) {
+            inParams[3] = params[2];
         }
         executeSql(inParams);
 
     }
 
-    public void selectSqlOnThread(String[] parm){
+    public void selectSqlOnThread(String[] parm) {
         if (parm.length < 3) {
             return;
         }
-        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2],selectSqlFuncId=null;
+        String inDBName = parm[0], inOpCode = parm[1], inSql = parm[2], selectSqlFuncId = null;
         if (!BUtility.isNumeric(inOpCode)) {
             inOpCode = "0";
         }
@@ -227,14 +230,14 @@ public class EUExDataBaseMgr extends EUExBase {
                             Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
                             BUtility.transcoding(jsonItems.toString()));
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,0, jsonItems);
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, 0, jsonItems);
                     }
                 } else {
                     jsCallback(F_SELECTSQL_CALLBACK,
                             Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
                             EUExCallback.F_C_FAILED);
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false,1, new JSONArray());
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
                     }
                 }
             } catch (Exception e) {
@@ -242,14 +245,14 @@ public class EUExDataBaseMgr extends EUExBase {
                 jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != selectSqlFuncId) {
-                    callbackToJs(Integer.parseInt(selectSqlFuncId), false,1);
+                    callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1);
                 }
             }
         } else {
             jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                     EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
             if (null != selectSqlFuncId) {
-                callbackToJs(Integer.parseInt(selectSqlFuncId), false,1, new JSONArray());
+                callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
             }
         }
     }
@@ -263,13 +266,13 @@ public class EUExDataBaseMgr extends EUExBase {
         }).start();
     }
 
-    public void select(String[] params){
-        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
+    public void select(String[] params) {
+        DataBaseVO dbVO = DataHelper.gson.fromJson(params[0], DataBaseVO.class);
         selectSql(new String[]{
                 dbVO.name,
                 dbVO.id,
                 params[1],
-                params.length>2?params[2]:null
+                params.length > 2 ? params[2] : null
         });
     }
 
@@ -283,15 +286,15 @@ public class EUExDataBaseMgr extends EUExBase {
         return retValue;
     }
 
-    private static boolean isJson(String value){
-        if (TextUtils.isEmpty(value)){
+    private static boolean isJson(String value) {
+        if (TextUtils.isEmpty(value)) {
             return false;
         }
         try {
-            JSONObject jsonObject=new JSONObject(value);
+            JSONObject jsonObject = new JSONObject(value);
             return true;
         } catch (JSONException e) {
-            if (BDebug.DEBUG){
+            if (BDebug.DEBUG) {
                 e.printStackTrace();
             }
             return false;
@@ -300,12 +303,12 @@ public class EUExDataBaseMgr extends EUExBase {
 
     public boolean beginTransaction(String[] parm) {
         String inDBName = null, inOpCode = null;
-        boolean isJson=isJson(parm[0]);
-        if (isJson){
-            DataBaseVO dbVO=DataHelper.gson.fromJson(parm[0],DataBaseVO.class);
-            inDBName=dbVO.name;
-            inOpCode=dbVO.id;
-        }else{
+        boolean isJson = isJson(parm[0]);
+        if (isJson) {
+            DataBaseVO dbVO = DataHelper.gson.fromJson(parm[0], DataBaseVO.class);
+            inDBName = dbVO.name;
+            inOpCode = dbVO.id;
+        } else {
             inDBName = parm[0];
             inOpCode = parm[1];
         }
@@ -327,19 +330,19 @@ public class EUExDataBaseMgr extends EUExBase {
     }
 
     public void endTransaction(String[] parm) {
-        String inDBName = null, inOpCode = null,transactionFuncId = null;
-        boolean isJson=isJson(parm[0]);
-        if (isJson){
-            DataBaseVO dbVO=DataHelper.gson.fromJson(parm[0],DataBaseVO.class);
-            inDBName=dbVO.name;
-            inOpCode=dbVO.id;
-            if (parm.length>2){
-                transactionFuncId=parm[2];
+        String inDBName = null, inOpCode = null, transactionFuncId = null;
+        boolean isJson = isJson(parm[0]);
+        if (isJson) {
+            DataBaseVO dbVO = DataHelper.gson.fromJson(parm[0], DataBaseVO.class);
+            inDBName = dbVO.name;
+            inOpCode = dbVO.id;
+            if (parm.length > 2) {
+                transactionFuncId = parm[2];
             }
-        }else{
+        } else {
             inDBName = parm[0];
             inOpCode = parm[1];
-            if (parm.length >3) {
+            if (parm.length > 3) {
                 transactionFuncId = parm[3];
             }
         }
@@ -376,28 +379,47 @@ public class EUExDataBaseMgr extends EUExBase {
         }
     }
 
-    public void transactionEx(String[] params){
-        DataBaseVO dataBaseVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
-        String transFuncId=params[1];
-        String callbackFuncId=null;
-        if (params.length>2){
-            callbackFuncId=params[2];
+    public void transactionEx(final String[] params) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                transactionOnThread(params);
+            }
+        }).start();
+    }
+
+    private void transactionOnThread(String[] params){
+        DataBaseVO dataBaseVO = DataHelper.gson.fromJson(params[0], DataBaseVO.class);
+        String[] sqls = DataHelper.gson.fromJson(params[1], new TypeToken<String[]>() {
+        }.getType());
+        String callbackFuncId = null;
+        if (params.length > 2) {
+            callbackFuncId = params[2];
         }
-        beginTransaction(new String[]{
-                dataBaseVO.name,
-                dataBaseVO.id,
-                transFuncId,
-                callbackFuncId
-        });
-        callbackToJs(Integer.parseInt(transFuncId),false);//
-        StringBuilder endTransJS=new StringBuilder("javascript:");
-        endTransJS.append("uexDataBaseMgr.endTransaction('")
-                .append(dataBaseVO.name).append("','")
-                .append(dataBaseVO.id).append("','")
-                .append(transFuncId).append("','")
-                .append(callbackFuncId)
-                .append("');");
-        mBrwView.addUriTask(endTransJS.toString());
+        String inDBName = dataBaseVO.name, inOpCode = dataBaseVO.id;
+        SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
+        if (object == null) {
+            return;
+        }
+        object.beginTransaction();
+        boolean result=false;
+        try {
+            for (int i = 0; i < sqls.length; i++) {
+                object.execSQL(sqls[i]);
+            }
+            object.setTransactionSuccessful();
+            result=true;
+        }catch (Exception e){
+            if (BDebug.DEBUG){
+                e.printStackTrace();
+            }
+            result=false;
+        }finally {
+            object.endTransaction();
+        }
+        if (!TextUtils.isEmpty(callbackFuncId)){
+            callbackToJs(Integer.parseInt(callbackFuncId),false,result?0:1);
+        }
     }
 
     public int closeDataBase(String[] parm) {
@@ -439,13 +461,13 @@ public class EUExDataBaseMgr extends EUExBase {
         }
     }
 
-    public boolean close(String[] params){
-        DataBaseVO dbVO=DataHelper.gson.fromJson(params[0],DataBaseVO.class);
-        int result=closeDataBase(new String[]{
+    public boolean close(String[] params) {
+        DataBaseVO dbVO = DataHelper.gson.fromJson(params[0], DataBaseVO.class);
+        int result = closeDataBase(new String[]{
                 dbVO.name,
                 dbVO.id
         });
-        return result==0;
+        return result == 0;
     }
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
