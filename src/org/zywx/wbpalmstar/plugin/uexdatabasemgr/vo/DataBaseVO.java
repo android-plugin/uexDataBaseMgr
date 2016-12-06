@@ -12,4 +12,5 @@ public class DataBaseVO implements Serializable {
 
     public String id;
 
+    public int version=1;
 }

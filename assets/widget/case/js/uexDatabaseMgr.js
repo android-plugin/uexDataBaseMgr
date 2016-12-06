@@ -82,8 +82,32 @@ if (UNIT_TEST) {
             }else{
                 UNIT_TEST.assert(false);
             }
+        },
+        "readCustomDb":function () {
+            uexDataBaseMgr.copyDataBaseFile("res://musicEx.db",function (error) {
+                if (!error) {
+
+                    var db = uexDataBaseMgr.open("musicEx.db", 1017);
+                    if (db != null) {
+                        var sql = "SELECT * FROM Song";
+                        uexDataBaseMgr.select(db, sql, function (error, data) {
+                            if (error) {
+                                UNIT_TEST.assert(false);
+                            } else {
+                                UNIT_TEST.log(JSON.stringify(data));
+                                UNIT_TEST.assert(true);
+                            }
+                            db.close();
+                        });
+                    } else {
+                        UNIT_TEST.assert(false);
+                    }
+                }else{
+                    UNIT_TEST.assert(false);
+                }
+            });
         }
 
-    }
+    };
     UNIT_TEST.addCase("db", uexDatabaseMgrCase);
 }

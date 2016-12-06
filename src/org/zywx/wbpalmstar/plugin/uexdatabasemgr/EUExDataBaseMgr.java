@@ -1,6 +1,7 @@
 package org.zywx.wbpalmstar.plugin.uexdatabasemgr;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -9,6 +10,7 @@ import android.text.TextUtils;
 
 import com.google.gson.reflect.TypeToken;
 
+import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +22,7 @@ import org.zywx.wbpalmstar.engine.universalex.EUExBase;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 import org.zywx.wbpalmstar.plugin.uexdatabasemgr.vo.DataBaseVO;
 
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +42,6 @@ public class EUExDataBaseMgr extends EUExBase {
     private HashMap<String, SQLiteDatabase> m_dbMap;
     private HashMap<String, DatabaseHelper> m_dbHMap;
     private List<String> opCodeList = new ArrayList<String>();
-    private static final int m_DbVer = 1;
     private Context m_eContext;
     private static int sCurrentId;
 
@@ -56,12 +58,15 @@ public class EUExDataBaseMgr extends EUExBase {
     }
 
     public int openDataBase(String[] parm) {
-        if (parm.length != 2) {
+        if (parm.length < 2) {
             return EUExCallback.F_C_FAILED;
         }
         String inDBName = parm[0];
         String inOpCode = parm[1];
-
+        int dbVersion=1;
+        if (parm.length>2){
+            dbVersion= Integer.parseInt(parm[2]);
+        }
         if (inOpCode == null || inOpCode.length() == 0) {
             inOpCode = "0";
         }
@@ -74,7 +79,7 @@ public class EUExDataBaseMgr extends EUExBase {
             }
 
             DatabaseHelper m_databaseHelper = new DatabaseHelper(m_eContext,
-                    inDBName, m_DbVer);
+                    inDBName, dbVersion);
             String dbFlg = getDBFlg(inDBName, inOpCode);
             m_dbMap.put(dbFlg, m_databaseHelper.getWritableDatabase());
             m_dbHMap.put(dbFlg, m_databaseHelper);
@@ -96,9 +101,13 @@ public class EUExDataBaseMgr extends EUExBase {
         DataBaseVO dataBaseVO = new DataBaseVO();
         dataBaseVO.id = generateId();
         dataBaseVO.name = params[0];
+        if (params.length>1){
+            dataBaseVO.version= Integer.parseInt(params[1]);
+        }
         int result = openDataBase(new String[]{
                 dataBaseVO.name,
                 dataBaseVO.id,
+                String.valueOf(dataBaseVO.version)
         });
         return result == F_C_SUCCESS ? dataBaseVO : null;
     }
@@ -486,10 +495,99 @@ public class EUExDataBaseMgr extends EUExBase {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            BDebug.i("oldVersion",oldVersion,"newVersion",newVersion);
             m_context.deleteDatabase(m_dbName);
 
         }
     }
+
+    public void copyDataBaseFile(String[] params){
+        String inputUserPath=params[0];
+        String dbName= getDBName(inputUserPath);
+        new DatabaseHelper(mContext,dbName,1);
+        int callbackId=-1;
+        if (params.length>1){
+            callbackId= Integer.parseInt(params[1]);
+        }
+        String realUserPath=BUtility.makeRealPath(inputUserPath,mBrwView);
+        copyAndCallbackOnThread(realUserPath,inputUserPath,callbackId);
+
+    }
+
+    private void copyAndCallbackOnThread(final String realUserPath, final String inputUserPath, final int callbackId){
+        final String targetPath=getTargetPath(getDBName(inputUserPath));
+             new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (inputUserPath.startsWith("res://")){
+                        boolean result=copyAssetsToFilesystem(realUserPath,targetPath);
+                    if (callbackId!=-1){
+                        callbackToJs(callbackId,false,result?0:1);
+                    }
+                    }else{
+                        try {
+                            FileUtils.copyFile(new File(realUserPath),new File(targetPath));
+                            callbackToJs(callbackId,false,0);
+                        } catch (IOException e) {
+                            if (BDebug.DEBUG){
+                                e.printStackTrace();
+                            }
+                            callbackToJs(callbackId,false,1);
+                        }
+                    }
+                }
+            }).start();
+    }
+
+    /**
+     * 获取数据库的文件名
+     * @param path
+     * @return
+     */
+    private String getDBName(String path){
+        return path.substring(path.lastIndexOf("/")+1);
+    }
+
+    /**
+     * 获取数据库存放目标路径
+     * @param dbName
+     * @return
+     */
+    private String getTargetPath(String dbName){
+        return String.format("/data/data/%s/databases/%s",mContext.getPackageName(),dbName);
+    }
+
+    private boolean copyAssetsToFilesystem(String assetsSrc, String des){
+        InputStream istream = null;
+        OutputStream ostream = null;
+        try{
+            AssetManager am = mContext.getAssets();
+            istream = am.open(assetsSrc);
+            ostream = new FileOutputStream(des);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = istream.read(buffer))>0){
+                ostream.write(buffer, 0, length);
+            }
+            istream.close();
+            ostream.close();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            try{
+                if(istream!=null)
+                    istream.close();
+                if(ostream!=null)
+                    ostream.close();
+            }
+            catch(Exception ee){
+                ee.printStackTrace();
+            }
+            return false;
+        }
+        return true;
+    }
+
 
     @Override
     protected boolean clean() {

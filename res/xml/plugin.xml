@@ -16,5 +16,6 @@
         <method name="transactionEx"/>
         <method name="closeDataBase"/>
         <method name="close"/>
+        <method name="copyDataBaseFile"/>
     </plugin>
 </uexplugins>
