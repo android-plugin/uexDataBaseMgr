@@ -151,7 +151,10 @@ public class EUExDataBaseMgr extends EUExBase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    BDebug.sendUDPLog("execute error: "+e.getMessage()+"\n");
+                    if (BDebug.DEBUG) {
+                        e.printStackTrace();
+                    }
                     jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
                             EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                     if (null != finalExecuteSqlFuncId) {
@@ -250,7 +253,10 @@ public class EUExDataBaseMgr extends EUExBase {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                BDebug.sendUDPLog("select error: "+e.getMessage()+"\n");
+                if (BDebug.DEBUG) {
+                    e.printStackTrace();
+                }
                 jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != selectSqlFuncId) {
@@ -419,6 +425,7 @@ public class EUExDataBaseMgr extends EUExBase {
             object.setTransactionSuccessful();
             result=true;
         }catch (Exception e){
+            BDebug.sendUDPLog("transaction error: "+e.getMessage()+"\n");
             if (BDebug.DEBUG){
                 e.printStackTrace();
             }

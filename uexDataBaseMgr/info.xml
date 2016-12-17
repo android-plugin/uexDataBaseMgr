@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
     <plugin
-        uexName="uexDataBaseMgr" version="4.0.1" build="3">
-        <info>3:支持读取APP预置数据库</info>
-        <build>2:支持function传入</>
-        <build>1:修复多次打开同一数据库，关闭一次后，数据库全部关闭的问题。</build>
-        <build>0:数据库功能插件</build>
+        uexName="uexDataBaseMgr" version="4.1.0" build="4">
+        <info>2:(依赖引擎4.1.0)支持显示sql执行错误信息到IDE</info>
+        <build>1:支持读取APP预置数据库</build>
+        <build>0:支持function传入</>
     </plugin>
 </uexplugins>
