@@ -4,6 +4,6 @@
         uexName="uexDataBaseMgr" version="4.1.0" build="4">
         <info>2:(依赖引擎4.1.0)支持显示sql执行错误信息到IDE</info>
         <build>1:支持读取APP预置数据库</build>
-        <build>0:支持function传入</>
+        <build>0:支持function传入</build>
     </plugin>
 </uexplugins>
