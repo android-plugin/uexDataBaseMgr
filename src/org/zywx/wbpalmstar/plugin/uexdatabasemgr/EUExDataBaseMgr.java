@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.zywx.wbpalmstar.engine.universalex.EUExCallback.F_C_SUCCESS;
 
@@ -44,6 +46,7 @@ public class EUExDataBaseMgr extends EUExBase {
     private List<String> opCodeList = new ArrayList<String>();
     private Context m_eContext;
     private static int sCurrentId;
+    private ExecutorService cachedThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2 + 1);
 
     public EUExDataBaseMgr(Context context, EBrowserView inParent) {
         super(context, inParent);
@@ -129,25 +132,25 @@ public class EUExDataBaseMgr extends EUExBase {
             executeSqlFuncId = parm[3];
         }
         final String finalExecuteSqlFuncId = executeSqlFuncId;
-        new Thread(new Runnable() {
+        cachedThreadPool.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
-                    if (object != null) {
-
-                        object.execSQL(inSql);
-                        jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                                EUExCallback.F_C_INT, F_C_SUCCESS);
-                        if (null != finalExecuteSqlFuncId) {
-                            callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 0);
-                        }
-
-                    } else {
-                        jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
-                                EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-                        if (null != finalExecuteSqlFuncId) {
-                            callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 1);
+                    synchronized (object) {
+                        if (object != null && object.isOpen()) {
+                            object.execSQL(inSql);
+                            jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
+                                    EUExCallback.F_C_INT, F_C_SUCCESS);
+                            if (null != finalExecuteSqlFuncId) {
+                                callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 0);
+                            }
+                        } else {
+                            jsCallback(F_EXECSQL_CALLBACK, Integer.parseInt(inOpCode),
+                                    EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                            if (null != finalExecuteSqlFuncId) {
+                                callbackToJs(Integer.parseInt(finalExecuteSqlFuncId), false, 1);
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -162,7 +165,7 @@ public class EUExDataBaseMgr extends EUExBase {
                     }
                 }
             }
-        }).start();
+        });
         return true;
 
     }
@@ -192,93 +195,95 @@ public class EUExDataBaseMgr extends EUExBase {
             selectSqlFuncId = parm[3];
         }
         SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
-        if (object != null) {
-            try {
-                Cursor cursor = object.rawQuery(inSql, null);
-                if (cursor != null) {
+        synchronized (object) {
+            if (object != null && object.isOpen()) {
+                try {
+                    Cursor cursor = object.rawQuery(inSql, null);
+                    if (cursor != null) {
 
-                    JSONArray jsonItems = new JSONArray();
-                    while (cursor.moveToNext()) {
-                        int count = cursor.getColumnCount();
-                        JSONObject jo = new JSONObject();
-                        for (int i = 0; i < count; i++) {
-                            String key = cursor.getColumnName(i);
-                            String value = null;
-                            int sysVersion = Integer.parseInt(Build.VERSION.SDK);
-                            if (sysVersion < 11) {
-                                value = cursor.getString(i);
-                            } else {
-                                switch (cursor.getType(i)) {
-                                    case Cursor.FIELD_TYPE_NULL:
-                                        value = cursor.getString(i);
-                                        break;
-                                    case Cursor.FIELD_TYPE_BLOB:
-                                        value = new String(cursor.getBlob(i));
-                                        break;
-                                    case Cursor.FIELD_TYPE_FLOAT:
-                                        double dl = cursor.getDouble(i);
-                                        value = String.valueOf(formatNum(dl));
-                                        break;
-                                    case Cursor.FIELD_TYPE_INTEGER:
-                                        value = String.valueOf(cursor.getInt(i));
-                                        break;
-                                    case Cursor.FIELD_TYPE_STRING:
-                                        value = cursor.getString(i);
-                                        break;
-                                    default:
-                                        break;
+                        JSONArray jsonItems = new JSONArray();
+                        while (cursor.moveToNext()) {
+                            int count = cursor.getColumnCount();
+                            JSONObject jo = new JSONObject();
+                            for (int i = 0; i < count; i++) {
+                                String key = cursor.getColumnName(i);
+                                String value = null;
+                                int sysVersion = Integer.parseInt(Build.VERSION.SDK);
+                                if (sysVersion < 11) {
+                                    value = cursor.getString(i);
+                                } else {
+                                    switch (cursor.getType(i)) {
+                                        case Cursor.FIELD_TYPE_NULL:
+                                            value = cursor.getString(i);
+                                            break;
+                                        case Cursor.FIELD_TYPE_BLOB:
+                                            value = new String(cursor.getBlob(i));
+                                            break;
+                                        case Cursor.FIELD_TYPE_FLOAT:
+                                            double dl = cursor.getDouble(i);
+                                            value = String.valueOf(formatNum(dl));
+                                            break;
+                                        case Cursor.FIELD_TYPE_INTEGER:
+                                            value = String.valueOf(cursor.getInt(i));
+                                            break;
+                                        case Cursor.FIELD_TYPE_STRING:
+                                            value = cursor.getString(i);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+
+                                if (!TextUtils.isEmpty(value)) {
+                                    jo.put(key, value);
+                                } else {
+                                    jo.put(key, "");
                                 }
                             }
-
-                            if (!TextUtils.isEmpty(value)) {
-                                jo.put(key, value);
-                            } else {
-                                jo.put(key, "");
-                            }
+                            jsonItems.put(jo);
                         }
-                        jsonItems.put(jo);
+                        jsCallback(F_SELECTSQL_CALLBACK,
+                                Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
+                                BUtility.transcoding(jsonItems.toString()));
+                        if (null != selectSqlFuncId) {
+                            callbackToJs(Integer.parseInt(selectSqlFuncId), false, 0, jsonItems);
+                        }
+                    } else {
+                        jsCallback(F_SELECTSQL_CALLBACK,
+                                Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
+                                EUExCallback.F_C_FAILED);
+                        if (null != selectSqlFuncId) {
+                            callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
+                        }
                     }
-                    jsCallback(F_SELECTSQL_CALLBACK,
-                            Integer.parseInt(inOpCode), EUExCallback.F_C_JSON,
-                            BUtility.transcoding(jsonItems.toString()));
-                    if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, 0, jsonItems);
+                } catch (Exception e) {
+                    BDebug.sendUDPLog("select error: " + e.getMessage() + "\n");
+                    if (BDebug.DEBUG) {
+                        e.printStackTrace();
                     }
-                } else {
-                    jsCallback(F_SELECTSQL_CALLBACK,
-                            Integer.parseInt(inOpCode), EUExCallback.F_C_INT,
-                            EUExCallback.F_C_FAILED);
+                    jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
+                            EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                     if (null != selectSqlFuncId) {
-                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
+                        callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1);
                     }
                 }
-            } catch (Exception e) {
-                BDebug.sendUDPLog("select error: "+e.getMessage()+"\n");
-                if (BDebug.DEBUG) {
-                    e.printStackTrace();
-                }
+            } else {
                 jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
                         EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                 if (null != selectSqlFuncId) {
-                    callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1);
+                    callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
                 }
-            }
-        } else {
-            jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
-                    EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-            if (null != selectSqlFuncId) {
-                callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
             }
         }
     }
 
     public void selectSql(final String[] parm) {
-        new Thread(new Runnable() {
+        cachedThreadPool.execute(new Runnable() {
             @Override
             public void run() {
                 selectSqlOnThread(parm);
             }
-        }).start();
+        });
     }
 
     public void select(String[] params) {
@@ -395,12 +400,12 @@ public class EUExDataBaseMgr extends EUExBase {
     }
 
     public void transactionEx(final String[] params) {
-        new Thread(new Runnable() {
+        cachedThreadPool.execute(new Runnable() {
             @Override
             public void run() {
                 transactionOnThread(params);
             }
-        }).start();
+        });
     }
 
     private void transactionOnThread(String[] params){
@@ -416,25 +421,29 @@ public class EUExDataBaseMgr extends EUExBase {
         if (object == null) {
             return;
         }
-        object.beginTransaction();
-        boolean result=false;
-        try {
-            for (int i = 0; i < sqls.length; i++) {
-                object.execSQL(sqls[i]);
+        synchronized (object) {
+            boolean result = false;
+            if (object.isOpen()) {
+                object.beginTransaction();
+                try {
+                    for (int i = 0; i < sqls.length; i++) {
+                        object.execSQL(sqls[i]);
+                    }
+                    object.setTransactionSuccessful();
+                    result = true;
+                }catch (Exception e){
+                    BDebug.sendUDPLog("transaction error: "+e.getMessage()+"\n");
+                    if (BDebug.DEBUG){
+                        e.printStackTrace();
+                    }
+                    result = false;
+                }finally {
+                    object.endTransaction();
+                }
             }
-            object.setTransactionSuccessful();
-            result=true;
-        }catch (Exception e){
-            BDebug.sendUDPLog("transaction error: "+e.getMessage()+"\n");
-            if (BDebug.DEBUG){
-                e.printStackTrace();
+            if (!TextUtils.isEmpty(callbackFuncId)){
+                callbackToJs(Integer.parseInt(callbackFuncId), false, result ? 0 : 1);
             }
-            result=false;
-        }finally {
-            object.endTransaction();
-        }
-        if (!TextUtils.isEmpty(callbackFuncId)){
-            callbackToJs(Integer.parseInt(callbackFuncId),false,result?0:1);
         }
     }
 
