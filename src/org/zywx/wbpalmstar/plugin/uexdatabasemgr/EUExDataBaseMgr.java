@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 import org.zywx.wbpalmstar.base.BUtility;
 import org.zywx.wbpalmstar.engine.EBrowserView;
 import org.zywx.wbpalmstar.engine.universalex.EUExBase;
@@ -15,8 +16,8 @@ import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteOpenHelper;
 import android.os.Build.VERSION;
 import android.text.TextUtils;
 
@@ -46,7 +47,7 @@ public class EUExDataBaseMgr extends EUExBase {
 
     }
 	public void openDataBase(String[] parm) {
-		if (parm.length != 2) {
+		if (parm.length < 2) {
 			return;
 		}
 		String inDBName = parm[0];
@@ -66,7 +67,11 @@ public class EUExDataBaseMgr extends EUExBase {
 			DatabaseHelper m_databaseHelper = new DatabaseHelper(m_eContext,
 					inDBName, m_DbVer);
             String dbFlg = getDBFlg(inDBName, inOpCode);
-            m_dbMap.put(dbFlg, m_databaseHelper.getWritableDatabase());
+			String dbKey = null;
+            if (parm.length > 2){
+				dbKey = TextUtils.isEmpty(parm[2]) ? null : parm[2];
+			}
+            m_dbMap.put(dbFlg, m_databaseHelper.getWritableDatabase(dbKey));
             m_dbHMap.put(dbFlg, m_databaseHelper);
 			opCodeList.add(inOpCode);
 			jsCallback(F_OPENDATABASE_CALLBACK, Integer.parseInt(inOpCode),
