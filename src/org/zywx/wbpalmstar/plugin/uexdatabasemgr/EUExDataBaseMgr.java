@@ -195,8 +195,17 @@ public class EUExDataBaseMgr extends EUExBase {
             selectSqlFuncId = parm[3];
         }
         SQLiteDatabase object = m_dbMap.get(getDBFlg(inDBName, inOpCode));
+        if (object == null){
+            // 这种情况是有可能从未open，或者已经close了，要做一个保护。
+            jsCallback(F_SELECTSQL_CALLBACK, Integer.parseInt(inOpCode),
+                    EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+            if (null != selectSqlFuncId) {
+                callbackToJs(Integer.parseInt(selectSqlFuncId), false, 1, new JSONArray());
+            }
+            return;
+        }
         synchronized (object) {
-            if (object != null && object.isOpen()) {
+            if (object.isOpen()) {
                 try {
                     Cursor cursor = object.rawQuery(inSql, null);
                     if (cursor != null) {
