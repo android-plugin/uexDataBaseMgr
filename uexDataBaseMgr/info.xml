@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
     <plugin
-        uexName="uexDataBaseMgr" version="4.1.3.1" build="2017091301">
-        <info>3:(依赖引擎4.1.0)修复连续操作数据库崩溃问题</info>
+        uexName="uexDataBaseMgr" version="4.1.4" build="2020022401">
+        <info>3:修复某种情况下操作未开启的数据库opId的时候，可能导致崩溃的问题（应该给回调）</info>
+        <build>3:(依赖引擎4.1.0)修复连续操作数据库崩溃问题</build>
         <build>2:(依赖引擎4.1.0)支持显示sql执行错误信息到IDE</build>
         <build>1:支持读取APP预置数据库</build>
         <build>0:支持function传入</build>
